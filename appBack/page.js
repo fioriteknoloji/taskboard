@@ -148,9 +148,11 @@ export default function Board() {
     if (!form.title?.trim()) return
     setSaving(true)
     const tags = form.tags ? form.tags.split(',').map(s=>s.trim()).filter(Boolean) : []
+    const assigneeProfile = profiles.find(p => p.id === form.assignee_id)
     const payload = {
       title: form.title.trim(), status: form.status, priority: form.priority,
       assignee_id: form.assignee_id || null,
+      assignee: assigneeProfile?.initials || profile?.initials || '',
       tags, due_date: form.due_date || null,
       updated_at: new Date().toISOString(),
     }
