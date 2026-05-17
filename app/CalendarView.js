@@ -44,13 +44,15 @@ function sameDay(a, b) {
 function getTasksForDay(tasks, day) {
   const dayStr = toYMD(day)
   return tasks.filter(t => {
-    const start = t.start_date || t.due_date
-    const end = t.due_date || t.start_date
-    if (!start && !end) return false
-    if (start && end) {
-      return dayStr >= Math.min(start, end) && dayStr <= Math.max(start, end)
+    const due = t.due_date || null
+    const start = t.start_date || null
+    if (!due && !start) return false
+    if (start && due) {
+      const lo = start < due ? start : due
+      const hi = start < due ? due : start
+      return dayStr >= lo && dayStr <= hi
     }
-    return start === dayStr || end === dayStr
+    return due === dayStr || start === dayStr
   })
 }
 
