@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
+import CalendarView from './CalendarView'
 
 const COLUMNS = [
   { id: 'todo',  label: 'Yapılacak',  color: '#9b9b9b', icon: '○' },
@@ -135,12 +136,12 @@ export default function Board() {
   const assigneeOptions = isAdmin ? profiles : (profile ? [profile] : [])
 
   function openNew() {
-    setForm({ title:'', status:'todo', priority:'mid', assignee_id: profile?.id || '', tags:'', due_date:'' })
+    setForm({ title:'', status:'todo', priority:'mid', assignee_id: profile?.id || '', tags:'', start_date:'', due_date:'' })
     setModal('new'); setActiveTab('detail')
   }
 
   function openEdit(task) {
-    setForm({ title:task.title, status:task.status, priority:task.priority, assignee_id:task.assignee_id||'', tags:(task.tags||[]).join(', '), due_date:task.due_date||'' })
+    setForm({ title:task.title, status:task.status, priority:task.priority, assignee_id:task.assignee_id||'', tags:(task.tags||[]).join(', '), start_date:task.start_date||'', due_date:task.due_date||'' })
     setNoteInput(''); setModal(task); setActiveTab('detail')
   }
 
@@ -151,7 +152,7 @@ export default function Board() {
     const payload = {
       title: form.title.trim(), status: form.status, priority: form.priority,
       assignee_id: form.assignee_id || null,
-      tags, due_date: form.due_date || null,
+      tags, start_date: form.start_date || null, due_date: form.due_date || null,
       updated_at: new Date().toISOString(),
     }
 
@@ -240,7 +241,7 @@ export default function Board() {
 
           <div style={{ fontSize:10, fontWeight:700, color:'#9b9b9b', textTransform:'uppercase', letterSpacing:'0.07em', padding:'0 10px', marginBottom:6 }}>Görünüm</div>
 
-          {[{id:'board',icon:'▦',label:'Pano'},{id:'activity',icon:'⊙',label:'Aktivite'}].map(v=>(
+          {[{id:'board',icon:'▦',label:'Pano'},{id:'calendar',icon:'◫',label:'Takvim'},{id:'activity',icon:'⊙',label:'Aktivite'}].map(v=>(
             <button key={v.id} className="sidelink" onClick={()=>setView(v.id)}
               style={{ background:view===v.id?'#f0efec':'none', color:view===v.id?'#1a1a1a':'#6b6b6b', fontWeight:view===v.id?500:400 }}>
               <span style={{ fontSize:15, opacity:.7 }}>{v.icon}</span>{v.label}
@@ -325,8 +326,22 @@ export default function Board() {
           </div>
 
           {/* Content */}
-          <div style={{ flex:1, overflow:'auto', padding:18 }}>
-            {view === 'activity' ? (
+          {/* Content */}
+          <div style={{ flex:1, overflow: view==='calendar' ? 'hidden' : 'auto', padding: view==='calendar' ? '18px 18px 8px' : 18, display:'flex', flexDirection:'column' }}>
+            {view === 'calendar' ? (
+              <CalendarView
+                tasks={filtered}
+                profiles={profiles}
+                onTaskClick={openEdit}
+                onTaskUpdate={async (id, updates) => {
+                  await supabase.from('tasks').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id)
+                }}
+                openNewWithDate={(date) => {
+                  setForm({ title:'', status:'todo', priority:'mid', assignee_id: profile?.id || '', tags:'', start_date: date, due_date: date })
+                  setModal('new'); setActiveTab('detail')
+                }}
+              />
+            ) : view === 'activity' ? (
               <div style={{ maxWidth:580, margin:'0 auto' }}>
                 <h2 style={{ fontSize:15, fontWeight:600, marginBottom:16, letterSpacing:'-0.02em' }}>Aktivite Geçmişi</h2>
                 {activity.length === 0 && <div style={{ textAlign:'center', padding:'48px 0', color:'#9b9b9b', fontSize:13 }}>Henüz aktivite yok</div>}
@@ -449,7 +464,7 @@ export default function Board() {
                   <Field label="Görev adı">
                     <Inp value={form.title||''} onChange={e=>setForm(f=>({...f,title:e.target.value}))} placeholder="Ne yapılacak?" autoFocus onKeyDown={e=>e.key==='Enter'&&saveTask()} />
                   </Field>
-                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:12 }}>
                     <Field label="Durum">
                       <Sel value={form.status} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>
                         {COLUMNS.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}
@@ -467,6 +482,9 @@ export default function Board() {
                         <option value="">Seç…</option>
                         {assigneeOptions.map(p=><option key={p.id} value={p.id}>{p.full_name} ({p.initials})</option>)}
                       </Sel>
+                    </Field>
+                    <Field label="Başlangıç tarihi">
+                      <Inp type="date" value={form.start_date||''} onChange={e=>setForm(f=>({...f,start_date:e.target.value}))} />
                     </Field>
                     <Field label="Bitiş tarihi">
                       <Inp type="date" value={form.due_date||''} onChange={e=>setForm(f=>({...f,due_date:e.target.value}))} />
