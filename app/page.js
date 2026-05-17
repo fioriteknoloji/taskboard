@@ -65,29 +65,44 @@ function actionMeta(a) {
 
 // Recurring: bir sonraki görevi oluştur
 async function createNextRecurring(task) {
-  if (!task.recurrence || !task.due_date) return
-  const due = new Date(task.due_date + 'T00:00:00')
-  const start = task.start_date ? new Date(task.start_date + 'T00:00:00') : null
-  const diff = start ? Math.floor((due - start) / 86400000) : 0
+  if (!task.recurrence || !task.due_date) return;
 
-  const offsets = { daily: 1, weekly: 7, biweekly: 14, monthly: 30 }
-  const days = offsets[task.recurrence] || 7
+  const due = new Date(task.due_date + 'T00:00:00');
+  const start = task.start_date ? new Date(task.start_date + 'T00:00:00') : null;
+  const diff = start ? Math.floor((due - start) / 86400000) : 0;
 
-  const newDue = new Date(due); newDue.setDate(newDue.getDate() + days)
-  const newDueStr = newDue.toISOString().split('T')[0]
+  const offsets = { daily: 1, weekly: 7, biweekly: 14, monthly: 30 };
+  const days = offsets[task.recurrence] || 7;
 
-  if (task.recurrence_end && newDueStr > task.recurrence_end) return
+  const newDue = new Date(due); 
+  newDue.setDate(newDue.getDate() + days);
+  const newDueStr = newDue.toISOString().split('T')[0];
 
-  const newStart = start ? new Date(newDue); start && newStart && newStart.setDate(newStart.getDate() - diff) : null
-  const payload = {
-    title: task.title, status: 'todo', priority: task.priority,
-    assignee_id: task.assignee_id, user_id: task.user_id,
-    tags: task.tags, notes: [], due_date: newDueStr,
-    start_date: newStart ? newStart.toISOString().split('T')[0] : null,
-    recurrence: task.recurrence, recurrence_end: task.recurrence_end,
-    parent_recurring_id: task.parent_recurring_id || task.id,
+  if (task.recurrence_end && newDueStr > task.recurrence_end) return;
+
+  // Hatalı tek satırlık (ternary) işlem yerine daha güvenli ve okunaklı atama
+  let newStart = null;
+  if (start) {
+    newStart = new Date(newDue);
+    newStart.setDate(newStart.getDate() - diff);
   }
-  await supabase.from('tasks').insert(payload)
+
+  const payload = {
+    title: task.title, 
+    status: 'todo', 
+    priority: task.priority,
+    assignee_id: task.assignee_id, 
+    user_id: task.user_id,
+    tags: task.tags, 
+    notes: [], 
+    due_date: newDueStr,
+    start_date: newStart ? newStart.toISOString().split('T')[0] : null,
+    recurrence: task.recurrence, 
+    recurrence_end: task.recurrence_end,
+    parent_recurring_id: task.parent_recurring_id || task.id,
+  };
+  
+  await supabase.from('tasks').insert(payload);
 }
 
 export default function Board() {
