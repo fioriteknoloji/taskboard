@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { sendNotification } from '../lib/useNotifications'
+import { Repeat, AlertTriangle, Square, Play, X, Sparkles, PenLine, ArrowRight, MessageSquare, Trash2, Circle } from 'lucide-react'
 
 const PRIORITY = {
   low:  { label:'Düşük', dot:'#9b9b9b', bg:'#f0efec', color:'#6b6b6b' },
