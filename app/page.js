@@ -9,7 +9,8 @@ import {
   Kanban, FolderGit2, Zap, GanttChart, CalendarDays, Scale, PieChart, Activity, Tags,
   Circle, Clock, CheckCircle2,
   Bell, ClipboardList, Plus, Search, LogOut, Hexagon,
-  Sparkles, PenLine, ArrowRight, MessageSquare, Trash2
+  Sparkles, PenLine, ArrowRight, MessageSquare, Trash2,
+  Moon, Sun, Menu, UserPlus
 } from 'lucide-react'
 import CalendarView   from './CalendarView'
 import TaskModal      from './TaskModal'
@@ -93,6 +94,23 @@ export default function Board(){
   const[view,setView]=useState('board')
   const[showNotif,setShowNotif]=useState(false)
   const[showTemplates,setShowTemplates]=useState(false)
+  const[theme,setTheme]=useState('light')
+  const[mobileMenuOpen,setMobileMenuOpen]=useState(false)
+
+  useEffect(()=>{
+    if(typeof window!=='undefined'){
+      const t=localStorage.getItem('ekip-theme')||'light'
+      setTheme(t)
+      document.documentElement.setAttribute('data-theme',t)
+    }
+  },[])
+
+  function toggleTheme(){
+    const t=theme==='light'?'dark':'light'
+    setTheme(t)
+    localStorage.setItem('ekip-theme',t)
+    document.documentElement.setAttribute('data-theme',t)
+  }
 
   const isAdmin=profile?.role==='admin'
 
@@ -147,7 +165,7 @@ export default function Board(){
 
   function openFromTemplate(tmpl){
     const d=tmpl.defaults||{}
-    setForm({title:d.title||`[${tmpl.name}] `,status:'todo',priority:d.priority||'mid',assignee_id:profile?.id||'',tags:(d.tags||[]).join(', '),start_date:'',due_date:'',recurrence:'',recurrence_end:'',project_id:filterProject||'',_templateChecklist:d.checklist||[]})
+    setForm({title:d.title||`[${tmpl.name}] `,status:'todo',priority:d.priority||'mid',assignee_id:d.assignee_id!==undefined?d.assignee_id:(profile?.id||''),tags:(d.tags||[]).join(', '),start_date:'',due_date:'',recurrence:'',recurrence_end:'',project_id:filterProject||'',_templateChecklist:d.checklist||[]})
     setModal('new');setShowTemplates(false)
   }
 
@@ -207,10 +225,27 @@ export default function Board(){
   async function handleDrop(targetStatus){
     if(!dragging)return
     const task=tasks.find(t=>t.id===dragging)
-    if(!task||task.status===targetStatus){setDragging(null);setDragOver(null);return}
-    await supabase.from('tasks').update({status:targetStatus,updated_at:new Date().toISOString()}).eq('id',dragging)
-    await log(task.id,task.title,'moved',`${STATUS_LABELS[task.status]} → ${STATUS_LABELS[targetStatus]}`)
-    if(targetStatus==='done'&&task.recurrence)await createNextRecurring(task)
+    if(!task){setDragging(null);setDragOver(null);return}
+
+    if(targetStatus==='pool'){
+      if(task.status==='todo' && !task.assignee_id){setDragging(null);setDragOver(null);return}
+      await supabase.from('tasks').update({status:'todo', assignee_id:null, updated_at:new Date().toISOString()}).eq('id',dragging)
+      await log(task.id,task.title,'moved',`Havuza bırakıldı`)
+    } else {
+      let updates = {status:targetStatus, updated_at:new Date().toISOString()}
+      let logMsg = `${STATUS_LABELS[task.status]} → ${STATUS_LABELS[targetStatus]}`
+      
+      if (task.status==='todo' && !task.assignee_id) {
+         updates.assignee_id = user.id
+         logMsg = `Havuzdan alındı ve ${STATUS_LABELS[targetStatus]} kolonuna taşındı`
+      } else if (task.status===targetStatus) {
+         setDragging(null);setDragOver(null);return
+      }
+      
+      await supabase.from('tasks').update(updates).eq('id',dragging)
+      await log(task.id,task.title,'moved', logMsg)
+      if(targetStatus==='done'&&task.recurrence)await createNextRecurring(task)
+    }
     setDragging(null);setDragOver(null)
   }
 
@@ -257,8 +292,11 @@ export default function Board(){
 
       <div style={{display:'flex',height:'100vh',overflow:'hidden'}}>
 
+        {/* MOBILE OVERLAY */}
+        <div className={`mobile-overlay ${mobileMenuOpen?'open':''}`} onClick={()=>setMobileMenuOpen(false)}></div>
+
         {/* SIDEBAR */}
-        <div style={{width:240,background:'var(--bg)',borderRight:'1px solid var(--border)',display:'flex',flexDirection:'column',padding:'24px 14px',flexShrink:0,overflowY:'auto'}}>
+        <div className={`sidebar ${mobileMenuOpen?'open':''}`} style={{width:240,background:'var(--bg)',borderRight:'1px solid var(--border)',display:'flex',flexDirection:'column',padding:'24px 14px',flexShrink:0,overflowY:'auto'}}>
           <div style={{display:'flex',alignItems:'center',gap:10,padding:'0 6px',marginBottom:28}}>
             <div style={{width:32,height:32,borderRadius:8,background:'linear-gradient(135deg, var(--accent), #a855f7)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,boxShadow:'var(--shadow-md)'}}>
               <Hexagon size={18} strokeWidth={2.5} color="white" fill="rgba(255,255,255,0.2)"/>
@@ -306,8 +344,9 @@ export default function Board(){
 
           {/* Topbar */}
           <div style={{height:64,borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',padding:'0 24px',gap:12,background:'var(--glass-bg)',backdropFilter:'var(--glass-blur)',WebkitBackdropFilter:'var(--glass-blur)',flexShrink:0,zIndex:10}}>
+            <button className="hide-on-desktop" onClick={()=>setMobileMenuOpen(true)} style={{background:'none',border:'none',color:'var(--text-primary)',cursor:'pointer',display:'none'}}><Menu size={20}/></button>
             {view==='board'&&<>
-              <div style={{position:'relative',flex:1,maxWidth:280}}>
+              <div className="search-box" style={{position:'relative',flex:1,maxWidth:280}}>
                 <Search style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',color:'var(--text-tertiary)',pointerEvents:'none'}} size={16} strokeWidth={2.5}/>
                 <input placeholder="Görev ara…" value={search} onChange={e=>setSearch(e.target.value)}
                   className="modern-input"
@@ -326,7 +365,10 @@ export default function Board(){
               {hasFilters&&<button onClick={()=>{setSearch('');setFilterPriority('');setFilterAssignee('');setFilterProject('')}} style={{height:32,padding:'0 10px',border:'1px solid rgba(0,0,0,0.1)',borderRadius:6,fontSize:12,color:'#6b6b6b',background:'none',cursor:'pointer'}}>Temizle ×</button>}
             </>}
 
-            <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:8}}>
+            <div className="topbar-right" style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:8}}>
+              <button onClick={toggleTheme} title="Tema Değiştir" style={{width:36,height:36,borderRadius:8,border:'1px solid var(--border)',background:'var(--bg)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text-secondary)'}}>
+                {theme==='dark' ? <Sun size={18} strokeWidth={2.5}/> : <Moon size={18} strokeWidth={2.5}/>}
+              </button>
               {/* Notifs */}
               <div style={{position:'relative'}}>
                 <button onClick={()=>setShowNotif(v=>!v)} style={{width:36,height:36,borderRadius:8,border:'1px solid var(--border)',background:showNotif?'var(--bg-hover)':'var(--bg)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text-secondary)',position:'relative'}}>
@@ -400,9 +442,38 @@ export default function Board(){
             )}
 
             {view==='board'&&(
-              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:20,alignItems:'start',padding:'4px'}}>
-                {COLUMNS.map(col=>{
-                  const colTasks=filtered.filter(t=>t.status===col.id)
+              <div style={{display:'flex',flexDirection:'column',gap:20,padding:'4px'}}>
+                {/* Job Pool */}
+                <div style={{background:'var(--bg-secondary)',border:'1px solid var(--border)',borderRadius:'var(--radius-lg)',padding:'16px'}}>
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <UserPlus size={16} strokeWidth={2.5} color="var(--accent)"/>
+                      <span style={{fontSize:14,fontWeight:600,color:'var(--text-primary)'}}>İş Havuzu (Atanmamış)</span>
+                      <span style={{fontSize:12,fontWeight:600,color:'var(--text-secondary)',background:'var(--bg)',padding:'2px 10px',borderRadius:99,border:'1px solid var(--border)'}}>{filtered.filter(t=>t.status==='todo'&&!t.assignee_id).length}</span>
+                    </div>
+                    <button onClick={()=>openNew({assignee_id:''})} className="btn-primary" style={{padding:'6px 14px',fontSize:12,height:30}}><Plus size={14} strokeWidth={2.5}/> Havuza Ekle</button>
+                  </div>
+                  <div onDragOver={e=>{e.preventDefault();setDragOver('pool')}} onDragLeave={()=>setDragOver(null)} onDrop={()=>handleDrop('pool')}
+                    style={{display:'flex',gap:16,overflowX:'auto',paddingBottom:8,minHeight:100,border:`2px dashed ${dragOver==='pool'?'var(--accent)':'transparent'}`,transition:'all var(--transition-fast)',borderRadius:'var(--radius-md)',background:dragOver==='pool'?'var(--accent-light)':'transparent'}}>
+                    {filtered.filter(t=>t.status==='todo'&&!t.assignee_id).length===0 && <div style={{fontSize:12,color:'var(--text-tertiary)',fontStyle:'italic',padding:'20px 10px'}}>Havuzda bekleyen iş yok.</div>}
+                    {filtered.filter(t=>t.status==='todo'&&!t.assignee_id).map(task=>{
+                      const p=PRIORITY[task.priority]||PRIORITY.mid
+                      const proj=projects.find(pr=>pr.id===task.project_id)
+                      return (
+                        <div key={task.id} className="kanban-card animate-slide-up" draggable onDragStart={()=>setDragging(task.id)} onDragEnd={()=>{setDragging(null);setDragOver(null)}} onClick={()=>openEdit(task)}
+                          style={{width:260,flexShrink:0,padding:'14px',opacity:dragging===task.id?0.4:1}}>
+                          {proj&&<div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}><span style={{fontSize:12}}>{proj.icon}</span><span style={{fontSize:11,color:proj.color,fontWeight:600,letterSpacing:'0.02em',textTransform:'uppercase'}}>{proj.name}</span></div>}
+                          <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:7}}><div style={{width:7,height:7,borderRadius:'50%',background:p.dot,flexShrink:0,marginTop:5}}/><span style={{fontSize:13,fontWeight:500,color:'var(--text-primary)',lineHeight:1.45,flex:1}}>{task.title}</span></div>
+                          {task.tags?.length>0&&<div style={{display:'flex',flexWrap:'wrap',gap:4,marginLeft:15,marginBottom:7}}>{task.tags.map(tag=><span key={tag} style={{fontSize:11,color:'var(--text-secondary)',background:'var(--bg-tertiary)',padding:'1px 7px',borderRadius:4,border:'1px solid var(--border)'}}>{tag}</span>)}</div>}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <div className="board-grid" style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:20,alignItems:'start'}}>
+                  {COLUMNS.map(col=>{
+                    const colTasks=filtered.filter(t=>t.status===col.id && !(col.id==='todo' && !t.assignee_id))
                   const over=dragOver===col.id
                   return(
                     <div key={col.id}
@@ -460,6 +531,7 @@ export default function Board(){
                   )
                 })}
               </div>
+            </div>
             )}
           </div>
         </div>
