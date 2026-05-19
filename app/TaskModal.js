@@ -32,12 +32,11 @@ function timeAgo(ts) {
 }
 
 function Inp({ style, ...p }) {
-  return <input onFocus={e=>e.target.style.borderColor='#5e6ad2'} onBlur={e=>e.target.style.borderColor='rgba(0,0,0,0.12)'}
-    style={{ width:'100%', border:'1px solid rgba(0,0,0,0.12)', borderRadius:6, padding:'7px 10px', fontSize:13, background:'#fff', color:'#1a1a1a', outline:'none', transition:'border-color 150ms', ...style }} {...p} />
+  return <input className="modern-input" style={{ padding:'8px 12px', ...style }} {...p} />
 }
 
 function Sel({ children, style, ...p }) {
-  return <select style={{ width:'100%', border:'1px solid rgba(0,0,0,0.12)', borderRadius:6, padding:'7px 10px', fontSize:13, background:'#fff', color:'#1a1a1a', outline:'none', cursor:'pointer', ...style }} {...p}>{children}</select>
+  return <select className="modern-input" style={{ padding:'8px 12px', cursor:'pointer', ...style }} {...p}>{children}</select>
 }
 
 function Field({ label, children }) {
@@ -109,7 +108,7 @@ function SubtasksPanel({ taskId }) {
       )}
       <div style={{ display:'flex', gap:8 }}>
         <Inp value={newTitle} onChange={e=>setNewTitle(e.target.value)} onKeyDown={e=>e.key==='Enter'&&add()} placeholder="Alt görev ekle… (Enter)" />
-        <button onClick={add} style={{ padding:'0 14px',background:'#5e6ad2',color:'#fff',border:'none',borderRadius:6,fontSize:13,fontWeight:500,cursor:'pointer',whiteSpace:'nowrap' }}>Ekle</button>
+        <button className="btn-primary" onClick={add} style={{ padding:'0 14px', whiteSpace:'nowrap' }}>Ekle</button>
       </div>
     </div>
   )
@@ -164,7 +163,7 @@ function DependenciesPanel({ taskId, allTasks }) {
             <option value="">Bağımlılık ekle…</option>
             {available.map(t=><option key={t.id} value={t.id}>{t.title}</option>)}
           </Sel>
-          <button onClick={add} disabled={!selected} style={{ padding:'0 14px',background:selected?'#5e6ad2':'#e0dfdc',color:'#fff',border:'none',borderRadius:6,fontSize:13,fontWeight:500,cursor:selected?'pointer':'default',whiteSpace:'nowrap' }}>Ekle</button>
+          <button className={selected?'btn-primary':''} onClick={add} disabled={!selected} style={{ padding:'0 14px',background:selected?'':'var(--border)',color:selected?'':'var(--text-secondary)',border:'none',borderRadius:6,fontSize:13,fontWeight:500,cursor:selected?'pointer':'default',whiteSpace:'nowrap' }}>Ekle</button>
         </div>
       ) : depTasks.length===0 && <div style={{ fontSize:13,color:'#9b9b9b',textAlign:'center',padding:'16px 0' }}>Bağımlılık eklenecek başka görev yok</div>}
     </div>
@@ -212,7 +211,7 @@ function MultiAssigneePanel({ taskId, profiles }) {
             <option value="">Kişi ekle…</option>
             {available.map(p=><option key={p.id} value={p.id}>{p.full_name} ({p.initials})</option>)}
           </Sel>
-          <button onClick={add} disabled={!selected} style={{ padding:'0 14px',background:selected?'#5e6ad2':'#e0dfdc',color:'#fff',border:'none',borderRadius:6,fontSize:13,fontWeight:500,cursor:selected?'pointer':'default',whiteSpace:'nowrap' }}>Ekle</button>
+          <button className={selected?'btn-primary':''} onClick={add} disabled={!selected} style={{ padding:'0 14px',background:selected?'':'var(--border)',color:selected?'':'var(--text-secondary)',border:'none',borderRadius:6,fontSize:13,fontWeight:500,cursor:selected?'pointer':'default',whiteSpace:'nowrap' }}>Ekle</button>
         </div>
       ) : available.length===0 && assignedProfiles.length===0 && (
         <div style={{ fontSize:13,color:'#9b9b9b',textAlign:'center',padding:'16px 0' }}>Eklenecek başka kişi yok</div>
@@ -287,10 +286,10 @@ function TimeTrackingPanel({ taskId, profile }) {
           {timer ? (
             <div>
               <div style={{ fontSize:18, fontWeight:700, color:'#e5484d', fontFamily:'monospace', marginBottom:4 }}>{fmtElapsed(elapsed)}</div>
-              <button onClick={stopTimer} style={{ padding:'5px 12px', background:'#e5484d', color:'#fff', border:'none', borderRadius:6, fontSize:12, fontWeight:600, cursor:'pointer' }}>⏹ Durdur & Kaydet</button>
+              <button onClick={stopTimer} style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'5px 12px', background:'#e5484d', color:'#fff', border:'none', borderRadius:6, fontSize:12, fontWeight:600, cursor:'pointer' }}><Square fill="currentColor" size={12}/> Durdur & Kaydet</button>
             </div>
           ) : (
-            <button onClick={startTimer} style={{ padding:'7px 14px', background:'#fff', border:'1px solid #bbf7d0', borderRadius:6, fontSize:12, fontWeight:500, cursor:'pointer', color:'#15803d' }}>▶ Timer Başlat</button>
+            <button onClick={startTimer} style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'7px 14px', background:'#fff', border:'1px solid #bbf7d0', borderRadius:6, fontSize:12, fontWeight:500, cursor:'pointer', color:'#15803d' }}><Play fill="currentColor" size={12}/> Timer Başlat</button>
           )}
         </div>
       </div>
@@ -474,7 +473,7 @@ function DependencyWarning({ taskId, allTasks }) {
   if (!blockers.length) return null
   return (
     <div style={{ padding:'10px 14px',background:'#fffbeb',border:'1px solid #fde68a',borderRadius:8,marginBottom:14,fontSize:12,color:'#854d0e',display:'flex',gap:8,alignItems:'flex-start' }}>
-      <span style={{ fontSize:16,flexShrink:0 }}>⚠️</span>
+      <AlertTriangle size={16} strokeWidth={2.5} style={{flexShrink:0, marginTop:1}}/>
       <div><div style={{ fontWeight:600,marginBottom:3 }}>Bu görev başlayamaz</div><div>{blockers.map(b=>b.title).join(', ')} tamamlanması gerekiyor.</div></div>
     </div>
   )
@@ -535,18 +534,18 @@ export default function TaskModal({ modal, form, setForm, setModal, profiles, al
   const taskActivity = !isNew ? activity.filter(a=>a.task_id===modal.id) : []
 
   function actionMeta(a) {
-    return ({created:{icon:'✦',bg:'#dcfce7'},updated:{icon:'✎',bg:'#fef3c7'},moved:{icon:'→',bg:'#dbeafe'},note:{icon:'✉',bg:'#ede9fe'},deleted:{icon:'✕',bg:'#fee2e2'}}[a])||{icon:'·',bg:'#f0efec'}
+    return ({created:{icon:<Sparkles size={13}/>,bg:'#dcfce7'},updated:{icon:<PenLine size={13}/>,bg:'#fef3c7'},moved:{icon:<ArrowRight size={13}/>,bg:'#dbeafe'},note:{icon:<MessageSquare size={13}/>,bg:'#ede9fe'},deleted:{icon:<Trash2 size={13}/>,bg:'#fee2e2'}}[a])||{icon:<Circle size={13}/>,bg:'#f0efec'}
   }
 
   return (
-    <div onClick={e=>{if(e.target===e.currentTarget)setModal(null)}}
-      style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.25)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:200,backdropFilter:'blur(3px)' }}>
-      <div style={{ background:'#fff',borderRadius:16,width:600,maxWidth:'95vw',maxHeight:'92vh',display:'flex',flexDirection:'column',boxShadow:'0 8px 40px rgba(0,0,0,0.14)',border:'1px solid rgba(0,0,0,0.08)' }}>
+    <div onClick={e=>{if(e.target===e.currentTarget)setModal(null)}} className="animate-fade-in"
+      style={{ position:'fixed',inset:0,background:'rgba(15, 23, 42, 0.4)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:200,backdropFilter:'var(--glass-blur)' }}>
+      <div className="animate-pop-in" style={{ background:'var(--bg)',borderRadius:'var(--radius-xl)',width:640,maxWidth:'95vw',maxHeight:'92vh',display:'flex',flexDirection:'column',boxShadow:'var(--shadow-xl)',border:'1px solid var(--glass-border)' }}>
 
         <div style={{ padding:'18px 20px 0',borderBottom:'1px solid rgba(0,0,0,0.08)',flexShrink:0 }}>
           <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14 }}>
             <span style={{ fontSize:14,fontWeight:600,letterSpacing:'-0.01em' }}>{isNew?'Yeni İş Ekle':'Görevi Düzenle'}</span>
-            <button onClick={()=>setModal(null)} style={{ width:28,height:28,borderRadius:6,border:'none',background:'none',cursor:'pointer',fontSize:18,color:'#9b9b9b' }}>×</button>
+            <button onClick={()=>setModal(null)} style={{ width:28,height:28,borderRadius:6,border:'none',background:'none',cursor:'pointer',color:'#9b9b9b',display:'flex',alignItems:'center',justifyContent:'center' }}><X size={18} strokeWidth={2.5}/></button>
           </div>
           <div style={{ display:'flex',gap:2,marginBottom:-1,overflowX:'auto' }}>
             {tabs.map(([id,lbl])=>(
@@ -576,7 +575,7 @@ export default function TaskModal({ modal, form, setForm, setModal, profiles, al
               <Field label="Etiketler (virgülle ayır)"><Inp value={form.tags||''} onChange={e=>setForm(f=>({...f,tags:e.target.value}))} placeholder="tasarım, backend, frontend…" /></Field>
               {!isNew && modal.recurrence && (
                 <div style={{ display:'flex',alignItems:'center',gap:8,padding:'8px 12px',background:'#eef0fc',borderRadius:8,marginBottom:14,fontSize:12,color:'#5e6ad2' }}>
-                  <span>🔁</span><span>Bu görev <b>{RECURRENCE_OPTIONS.find(o=>o.value===modal.recurrence)?.label}</b> tekrar ediyor</span>
+                  <Repeat size={14} strokeWidth={2.5}/><span>Bu görev <b>{RECURRENCE_OPTIONS.find(o=>o.value===modal.recurrence)?.label}</b> tekrar ediyor</span>
                 </div>
               )}
               {!isNew && <DependencyWarning taskId={modal.id} allTasks={allTasks} />}
@@ -629,20 +628,20 @@ export default function TaskModal({ modal, form, setForm, setModal, profiles, al
           )}
         </div>
 
-        <div style={{ padding:'14px 20px',borderTop:'1px solid rgba(0,0,0,0.08)',display:'flex',gap:8,alignItems:'center',flexShrink:0 }}>
+        <div style={{ padding:'16px 24px',borderTop:'1px solid var(--border)',display:'flex',gap:12,alignItems:'center',flexShrink:0,background:'var(--bg-secondary)',borderBottomLeftRadius:'var(--radius-xl)',borderBottomRightRadius:'var(--radius-xl)' }}>
           {!isNew&&(isAdmin||modal.user_id===user?.id)&&(
             <button onClick={()=>onDelete(modal.id)}
-              style={{ padding:'7px 14px',background:'none',border:'1px solid rgba(0,0,0,0.1)',borderRadius:6,fontSize:13,color:'#e5484d',cursor:'pointer' }}
-              onMouseEnter={e=>{e.currentTarget.style.background='#fff0f0';e.currentTarget.style.borderColor='#e5484d'}}
-              onMouseLeave={e=>{e.currentTarget.style.background='none';e.currentTarget.style.borderColor='rgba(0,0,0,0.1)'}}>
+              style={{ padding:'8px 16px',background:'none',border:'1px solid var(--border)',borderRadius:'var(--radius-md)',fontSize:13,color:'var(--red)',cursor:'pointer',fontWeight:500,transition:'all var(--transition-fast)' }}
+              onMouseEnter={e=>{e.currentTarget.style.background='var(--red-light)';e.currentTarget.style.borderColor='var(--red)'}}
+              onMouseLeave={e=>{e.currentTarget.style.background='none';e.currentTarget.style.borderColor='var(--border)'}}>
               Sil
             </button>
           )}
-          <div style={{ marginLeft:'auto',display:'flex',gap:8 }}>
-            <button onClick={()=>setModal(null)} style={{ padding:'7px 16px',background:'none',border:'1px solid rgba(0,0,0,0.1)',borderRadius:6,fontSize:13,color:'#6b6b6b',cursor:'pointer' }}>İptal</button>
+          <div style={{ marginLeft:'auto',display:'flex',gap:12 }}>
+            <button onClick={()=>setModal(null)} style={{ padding:'8px 18px',background:'none',border:'1px solid var(--border)',borderRadius:'var(--radius-md)',fontSize:13,fontWeight:500,color:'var(--text-secondary)',cursor:'pointer',transition:'background var(--transition-fast)' }} onMouseEnter={e=>e.currentTarget.style.background='var(--bg)'} onMouseLeave={e=>e.currentTarget.style.background='none'}>İptal</button>
             {(isNew||activeTab==='detail')&&(
-              <button onClick={save} disabled={saving}
-                style={{ padding:'7px 18px',background:saving?'#9b9b9b':'#5e6ad2',color:'#fff',border:'none',borderRadius:6,fontSize:13,fontWeight:500,cursor:saving?'default':'pointer' }}>
+              <button onClick={save} disabled={saving} className={saving?'':'btn-primary'}
+                style={{ padding:'8px 24px',background:saving?'var(--text-tertiary)':'',color:'#fff',border:'none',borderRadius:'var(--radius-md)',fontSize:13,fontWeight:600,cursor:saving?'default':'pointer' }}>
                 {saving?'Kaydediliyor…':isNew?'Ekle':'Kaydet'}
               </button>
             )}
@@ -755,8 +754,8 @@ Lütfen şu başlıklar altında Türkçe bir özet yaz:
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', marginBottom: 3 }}>
-            ✨ AI Görev Özeti
+          <div style={{ display:'flex', alignItems:'center', gap:6, fontSize: 13, fontWeight: 600, color: '#1a1a1a', marginBottom: 3 }}>
+            <Sparkles size={14} color="var(--accent)"/> AI Görev Özeti
           </div>
           <div style={{ fontSize: 11, color: '#9b9b9b' }}>
             {hasContent
@@ -784,7 +783,7 @@ Lütfen şu başlıklar altında Türkçe bir özet yaz:
               Özetleniyor…
             </>
           ) : (
-            <>{summary ? '🔄 Yenile' : '✨ Özetle'}</>
+            <>{summary ? <><Repeat size={14}/> Yenile</> : <><Sparkles size={14}/> Özetle</>}</>
           )}
         </button>
       </div>

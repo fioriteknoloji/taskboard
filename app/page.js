@@ -5,6 +5,12 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { useNotifications, sendNotification } from '../lib/useNotifications'
+import {
+  Kanban, FolderGit2, Zap, GanttChart, CalendarDays, Scale, PieChart, Activity, Tags,
+  Circle, Clock, CheckCircle2,
+  Bell, ClipboardList, Plus, Search, LogOut, Hexagon,
+  Sparkles, PenLine, ArrowRight, MessageSquare, Trash2
+} from 'lucide-react'
 import CalendarView   from './CalendarView'
 import TaskModal      from './TaskModal'
 import NotificationPanel from './NotificationPanel'
@@ -16,9 +22,9 @@ import DashboardView  from './DashboardView'
 import WorkloadView   from './WorkloadView'
 
 const COLUMNS = [
-  { id:'todo',  label:'Yapılacak',  color:'#9b9b9b', icon:'○' },
-  { id:'doing', label:'Devam Eden', color:'#5e6ad2', icon:'◑' },
-  { id:'done',  label:'Tamamlandı',color:'#22c55e', icon:'●' },
+  { id:'todo',  label:'Yapılacak',  color:'var(--text-tertiary)', icon:<Circle size={16} strokeWidth={2.5} /> },
+  { id:'doing', label:'Devam Eden', color:'var(--accent)', icon:<Clock size={16} strokeWidth={2.5} /> },
+  { id:'done',  label:'Tamamlandı', color:'var(--green)', icon:<CheckCircle2 size={16} strokeWidth={2.5} /> },
 ]
 const PRIORITY = {
   low:  { label:'Düşük', dot:'#9b9b9b', bg:'#f0efec', color:'#6b6b6b' },
@@ -51,7 +57,7 @@ function timeAgo(ts){
   return new Date(ts).toLocaleDateString('tr-TR',{day:'numeric',month:'short'})
 }
 
-function actionMeta(a){return({created:{icon:'✦',bg:'#dcfce7'},updated:{icon:'✎',bg:'#fef3c7'},moved:{icon:'→',bg:'#dbeafe'},note:{icon:'✉',bg:'#ede9fe'},deleted:{icon:'✕',bg:'#fee2e2'}}[a])||{icon:'·',bg:'#f0efec'}}
+function actionMeta(a){return({created:{icon:<Sparkles size={13}/>,bg:'#dcfce7'},updated:{icon:<PenLine size={13}/>,bg:'#fef3c7'},moved:{icon:<ArrowRight size={13}/>,bg:'#dbeafe'},note:{icon:<MessageSquare size={13}/>,bg:'#ede9fe'},deleted:{icon:<Trash2 size={13}/>,bg:'#fee2e2'}}[a])||{icon:<Circle size={13}/>,bg:'#f0efec'}}
 
 async function createNextRecurring(task){
   if(!task.recurrence||!task.due_date)return
@@ -228,15 +234,15 @@ export default function Board(){
   )
 
   const NAV=[
-    {id:'board',    icon:'▦',  label:'Pano'},
-    {id:'projects', icon:'📁', label:'Projeler'},
-    {id:'sprint',   icon:'⚡', label:'Sprint'},
-    {id:'gantt',    icon:'▬',  label:'Gantt'},
-    {id:'calendar', icon:'◫',  label:'Takvim'},
-    {id:'workload', icon:'⚖️', label:'İş Yükü'},
-    {id:'dashboard',icon:'📊', label:'Dashboard'},
-    {id:'activity', icon:'⊙',  label:'Aktivite'},
-    ...(isAdmin?[{id:'labels',icon:'🏷',label:'Etiketler'}]:[]),
+    {id:'board',    icon:<Kanban size={18} strokeWidth={2}/>,  label:'Pano'},
+    {id:'projects', icon:<FolderGit2 size={18} strokeWidth={2}/>, label:'Projeler'},
+    {id:'sprint',   icon:<Zap size={18} strokeWidth={2}/>, label:'Sprint'},
+    {id:'gantt',    icon:<GanttChart size={18} strokeWidth={2}/>,  label:'Gantt'},
+    {id:'calendar', icon:<CalendarDays size={18} strokeWidth={2}/>,  label:'Takvim'},
+    {id:'workload', icon:<Scale size={18} strokeWidth={2}/>, label:'İş Yükü'},
+    {id:'dashboard',icon:<PieChart size={18} strokeWidth={2}/>, label:'Dashboard'},
+    {id:'activity', icon:<Activity size={18} strokeWidth={2}/>,  label:'Aktivite'},
+    ...(isAdmin?[{id:'labels',icon:<Tags size={18} strokeWidth={2}/>,label:'Etiketler'}]:[]),
   ]
 
   const FULL_HEIGHT_VIEWS=['calendar','gantt','sprint','projects']
@@ -244,31 +250,26 @@ export default function Board(){
   return(
     <>
       <style>{`
-        @keyframes spin{to{transform:rotate(360deg)}}
-        @keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
-        .card{animation:fadeUp 180ms ease;transition:border-color 150ms,box-shadow 150ms}
-        .card:hover{border-color:rgba(0,0,0,0.18)!important;box-shadow:0 2px 8px rgba(0,0,0,0.07)!important}
-        .sidelink{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;border:none;cursor:pointer;font-size:13px;width:100%;text-align:left;transition:all 150ms;margin-bottom:2px}
-        .filtersel{height:32px;border:1px solid rgba(0,0,0,0.1);border-radius:6px;font-size:13px;background:#f7f7f5;padding:0 8px;outline:none;cursor:pointer;color:#6b6b6b}
+        .filtersel{height:34px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:13px;background:var(--bg-tertiary);padding:0 8px;outline:none;cursor:pointer;color:var(--text-secondary);transition:all var(--transition-normal)}
+        .filtersel:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light)}
         input[type=date]::-webkit-calendar-picker-indicator{opacity:0.4;cursor:pointer}
       `}</style>
 
-      <div style={{display:'flex',height:'100vh',overflow:'hidden',fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"}}>
+      <div style={{display:'flex',height:'100vh',overflow:'hidden'}}>
 
         {/* SIDEBAR */}
-        <div style={{width:210,background:'#fff',borderRight:'1px solid rgba(0,0,0,0.08)',display:'flex',flexDirection:'column',padding:'18px 10px',flexShrink:0,overflowY:'auto'}}>
-          <div style={{display:'flex',alignItems:'center',gap:8,padding:'0 6px',marginBottom:20}}>
-            <div style={{width:26,height:26,borderRadius:7,background:'#5e6ad2',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <div style={{width:240,background:'var(--bg)',borderRight:'1px solid var(--border)',display:'flex',flexDirection:'column',padding:'24px 14px',flexShrink:0,overflowY:'auto'}}>
+          <div style={{display:'flex',alignItems:'center',gap:10,padding:'0 6px',marginBottom:28}}>
+            <div style={{width:32,height:32,borderRadius:8,background:'linear-gradient(135deg, var(--accent), #a855f7)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,boxShadow:'var(--shadow-md)'}}>
+              <Hexagon size={18} strokeWidth={2.5} color="white" fill="rgba(255,255,255,0.2)"/>
             </div>
-            <span style={{fontSize:14,fontWeight:600,letterSpacing:'-0.02em'}}>Ekip Panosu</span>
+            <span style={{fontSize:16,fontWeight:700,letterSpacing:'-0.02em',color:'var(--text-primary)'}}>Ekip Panosu</span>
           </div>
 
-          <div style={{fontSize:10,fontWeight:700,color:'#9b9b9b',textTransform:'uppercase',letterSpacing:'0.07em',padding:'0 10px',marginBottom:6}}>Görünüm</div>
+          <div style={{fontSize:11,fontWeight:700,color:'var(--text-tertiary)',textTransform:'uppercase',letterSpacing:'0.07em',padding:'0 10px',marginBottom:10}}>Görünüm</div>
           {NAV.map(v=>(
-            <button key={v.id} className="sidelink" onClick={()=>setView(v.id)}
-              style={{background:view===v.id?'#f0efec':'none',color:view===v.id?'#1a1a1a':'#6b6b6b',fontWeight:view===v.id?500:400}}>
-              <span style={{fontSize:14,opacity:.8}}>{v.icon}</span>{v.label}
+            <button key={v.id} className={`sidebar-link ${view===v.id?'active':''}`} onClick={()=>setView(v.id)}>
+              <span className="icon">{v.icon}</span>{v.label}
             </button>
           ))}
 
@@ -287,13 +288,15 @@ export default function Board(){
                 </div>
               ))}
             </div>
-            <div style={{padding:'10px 8px',borderTop:'1px solid rgba(0,0,0,0.07)',display:'flex',alignItems:'center',gap:8}}>
-              <Avatar initials={profile.initials} size={28}/>
+            <div style={{padding:'12px 8px',borderTop:'1px solid var(--border)',display:'flex',alignItems:'center',gap:10,marginTop:10}}>
+              <Avatar initials={profile.initials} size={32}/>
               <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:12,fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{profile.full_name}</div>
-                <span style={{fontSize:10,fontWeight:600,padding:'1px 6px',borderRadius:99,background:isAdmin?'#eef0fc':'#f0efec',color:isAdmin?'#5e6ad2':'#6b6b6b'}}>{isAdmin?'Admin':'Üye'}</span>
+                <div style={{fontSize:13,fontWeight:600,color:'var(--text-primary)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{profile.full_name}</div>
+                <span style={{fontSize:10,fontWeight:600,padding:'2px 8px',borderRadius:99,background:isAdmin?'var(--accent-light)':'var(--bg-tertiary)',color:isAdmin?'var(--accent-hover)':'var(--text-secondary)'}}>{isAdmin?'Admin':'Üye'}</span>
               </div>
-              <button onClick={signOut} title="Çıkış" style={{background:'none',border:'none',cursor:'pointer',color:'#9b9b9b',padding:4,fontSize:14}}>⎋</button>
+              <button onClick={signOut} title="Çıkış" style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-tertiary)',padding:6,transition:'color 0.2s'}} onMouseEnter={e=>e.currentTarget.style.color='var(--red)'} onMouseLeave={e=>e.currentTarget.style.color='var(--text-tertiary)'}>
+                <LogOut size={16}/>
+              </button>
             </div>
           </div>
         </div>
@@ -302,13 +305,14 @@ export default function Board(){
         <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
 
           {/* Topbar */}
-          <div style={{height:52,borderBottom:'1px solid rgba(0,0,0,0.08)',display:'flex',alignItems:'center',padding:'0 18px',gap:10,background:'#fff',flexShrink:0}}>
+          <div style={{height:64,borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',padding:'0 24px',gap:12,background:'var(--glass-bg)',backdropFilter:'var(--glass-blur)',WebkitBackdropFilter:'var(--glass-blur)',flexShrink:0,zIndex:10}}>
             {view==='board'&&<>
-              <div style={{position:'relative',flex:1,maxWidth:240}}>
-                <svg style={{position:'absolute',left:9,top:'50%',transform:'translateY(-50%)',color:'#9b9b9b',pointerEvents:'none'}} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                <input placeholder="Ara…" value={search} onChange={e=>setSearch(e.target.value)}
-                  style={{width:'100%',paddingLeft:32,paddingRight:10,height:32,border:'1px solid rgba(0,0,0,0.1)',borderRadius:6,fontSize:13,background:'#f7f7f5',outline:'none'}}
-                  onFocus={e=>e.target.style.borderColor='#5e6ad2'} onBlur={e=>e.target.style.borderColor='rgba(0,0,0,0.1)'}/>
+              <div style={{position:'relative',flex:1,maxWidth:280}}>
+                <Search style={{position:'absolute',left:12,top:'50%',transform:'translateY(-50%)',color:'var(--text-tertiary)',pointerEvents:'none'}} size={16} strokeWidth={2.5}/>
+                <input placeholder="Görev ara…" value={search} onChange={e=>setSearch(e.target.value)}
+                  className="modern-input"
+                  style={{paddingLeft:38,paddingRight:12,height:38,background:'var(--bg-tertiary)',border:'1px solid transparent'}}
+                />
               </div>
               <select className="filtersel" value={filterPriority} onChange={e=>setFilterPriority(e.target.value)}>
                 <option value="">Öncelik</option><option value="high">Acil</option><option value="mid">Orta</option><option value="low">Düşük</option>
@@ -325,16 +329,16 @@ export default function Board(){
             <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:8}}>
               {/* Notifs */}
               <div style={{position:'relative'}}>
-                <button onClick={()=>setShowNotif(v=>!v)} style={{width:32,height:32,borderRadius:6,border:'1px solid rgba(0,0,0,0.1)',background:showNotif?'#f0efec':'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,position:'relative'}}>
-                  🔔{unreadCount>0&&<span style={{position:'absolute',top:-4,right:-4,width:16,height:16,borderRadius:'50%',background:'#e5484d',color:'#fff',fontSize:9,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',border:'1.5px solid #fff'}}>{unreadCount>9?'9+':unreadCount}</span>}
+                <button onClick={()=>setShowNotif(v=>!v)} style={{width:36,height:36,borderRadius:8,border:'1px solid var(--border)',background:showNotif?'var(--bg-hover)':'var(--bg)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text-secondary)',position:'relative'}}>
+                  <Bell size={18} strokeWidth={2.5}/>{unreadCount>0&&<span style={{position:'absolute',top:-4,right:-4,width:16,height:16,borderRadius:'50%',background:'#e5484d',color:'#fff',fontSize:9,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',border:'1.5px solid #fff'}}>{unreadCount>9?'9+':unreadCount}</span>}
                 </button>
                 {showNotif&&<NotificationPanel notifications={notifications} unreadCount={unreadCount} markRead={markRead} markAllRead={markAllRead} onClose={()=>setShowNotif(false)}/>}
               </div>
 
               {/* Templates */}
               <div style={{position:'relative'}}>
-                <button onClick={()=>setShowTemplates(v=>!v)} style={{height:32,padding:'0 12px',background:showTemplates?'#f0efec':'#fff',border:'1px solid rgba(0,0,0,0.1)',borderRadius:6,fontSize:13,cursor:'pointer',color:'#6b6b6b',display:'flex',alignItems:'center',gap:5}}>
-                  📋 Şablon
+                <button onClick={()=>setShowTemplates(v=>!v)} style={{height:36,padding:'0 14px',background:showTemplates?'var(--bg-hover)':'var(--bg)',border:'1px solid var(--border)',borderRadius:8,fontSize:13,cursor:'pointer',color:'var(--text-secondary)',display:'flex',alignItems:'center',gap:6,fontWeight:500}}>
+                  <ClipboardList size={16} strokeWidth={2.5}/> Şablon
                 </button>
                 {showTemplates&&(
                   <div style={{position:'absolute',top:40,right:0,width:240,background:'#fff',border:'1px solid rgba(0,0,0,0.1)',borderRadius:10,boxShadow:'0 4px 20px rgba(0,0,0,0.1)',zIndex:300,overflow:'hidden'}}>
@@ -352,17 +356,14 @@ export default function Board(){
                     <div onClick={()=>openNew()} style={{padding:'10px 14px',cursor:'pointer',fontSize:13,color:'#5e6ad2',fontWeight:500,display:'flex',alignItems:'center',gap:6}}
                       onMouseEnter={e=>e.currentTarget.style.background='#f7f7f5'}
                       onMouseLeave={e=>e.currentTarget.style.background='#fff'}>
-                      <span>+</span> Boş görev
+                      <Plus size={14} strokeWidth={3}/> Boş görev
                     </div>
                   </div>
                 )}
               </div>
 
-              <button onClick={()=>openNew()}
-                style={{height:32,padding:'0 14px',background:'#5e6ad2',color:'#fff',border:'none',borderRadius:6,fontSize:13,fontWeight:500,cursor:'pointer',display:'flex',alignItems:'center',gap:5,transition:'background 150ms'}}
-                onMouseEnter={e=>e.currentTarget.style.background='#4f5bc7'}
-                onMouseLeave={e=>e.currentTarget.style.background='#5e6ad2'}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>
+              <button onClick={()=>openNew()} className="btn-primary" style={{height:36,padding:'0 16px'}}>
+                <Plus size={16} strokeWidth={3}/>
                 Yeni İş
               </button>
             </div>
@@ -399,7 +400,7 @@ export default function Board(){
             )}
 
             {view==='board'&&(
-              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14,alignItems:'start'}}>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:20,alignItems:'start',padding:'4px'}}>
                 {COLUMNS.map(col=>{
                   const colTasks=filtered.filter(t=>t.status===col.id)
                   const over=dragOver===col.id
@@ -408,15 +409,15 @@ export default function Board(){
                       onDragOver={e=>{e.preventDefault();setDragOver(col.id)}}
                       onDragLeave={()=>setDragOver(null)}
                       onDrop={()=>handleDrop(col.id)}
-                      style={{background:over?'#eef0fc':'#f7f7f5',borderRadius:12,padding:12,border:`1.5px solid ${over?'#5e6ad2':'transparent'}`,transition:'all 150ms',minHeight:460}}>
-                      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12,padding:'2px 2px 10px',borderBottom:'1px solid rgba(0,0,0,0.07)'}}>
-                        <div style={{display:'flex',alignItems:'center',gap:6}}>
-                          <span style={{color:col.color,fontSize:13}}>{col.icon}</span>
-                          <span style={{fontSize:12,fontWeight:600,color:'#6b6b6b'}}>{col.label}</span>
+                      style={{background:over?'var(--accent-light)':'transparent',borderRadius:'var(--radius-lg)',padding:0,border:`2px dashed ${over?'var(--accent)':'transparent'}`,transition:'all var(--transition-normal)',minHeight:460}}>
+                      <div className="col-header" style={{'--column-color':col.color}}>
+                        <div style={{display:'flex',alignItems:'center',gap:8}}>
+                          <span style={{color:col.color,fontSize:16,textShadow:'0 2px 4px rgba(0,0,0,0.1)'}}>{col.icon}</span>
+                          <span style={{fontSize:14,fontWeight:600,color:'var(--text-primary)'}}>{col.label}</span>
                         </div>
-                        <span style={{fontSize:11,fontWeight:500,color:'#9b9b9b',background:'#fff',padding:'1px 8px',borderRadius:99,border:'1px solid rgba(0,0,0,0.08)'}}>{colTasks.length}</span>
+                        <span style={{fontSize:12,fontWeight:600,color:'var(--text-secondary)',background:'var(--bg)',padding:'2px 10px',borderRadius:99,boxShadow:'var(--shadow-sm)',border:'1px solid var(--border)'}}>{colTasks.length}</span>
                       </div>
-                      <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                      <div style={{display:'flex',flexDirection:'column',gap:12,padding:'2px'}}>
                         {colTasks.length===0&&<div style={{textAlign:'center',padding:'28px 0',fontSize:12,color:'#9b9b9b',border:'1px dashed rgba(0,0,0,0.1)',borderRadius:8}}>{hasFilters?'Eşleşen yok':'Kart yok'}</div>}
                         {colTasks.map(task=>{
                           const due=dueDateStatus(task.due_date,task.status)
@@ -425,11 +426,11 @@ export default function Board(){
                           const sc=subtaskCounts[task.id]
                           const proj=projects.find(pr=>pr.id===task.project_id)
                           return(
-                            <div key={task.id} className="card"
+                            <div key={task.id} className="kanban-card animate-slide-up"
                               draggable onDragStart={()=>setDragging(task.id)} onDragEnd={()=>{setDragging(null);setDragOver(null)}}
                               onClick={()=>openEdit(task)}
-                              style={{background:'#fff',borderRadius:10,padding:'12px 14px',cursor:'pointer',opacity:dragging===task.id?0.3:1,border:'1px solid rgba(0,0,0,0.08)',boxShadow:'0 1px 2px rgba(0,0,0,0.04)'}}>
-                              {proj&&<div style={{display:'flex',alignItems:'center',gap:4,marginBottom:6}}><span style={{fontSize:10}}>{proj.icon}</span><span style={{fontSize:10,color:proj.color,fontWeight:500}}>{proj.name}</span></div>}
+                              style={{padding:'16px',opacity:dragging===task.id?0.4:1,animationDelay:`${Math.min(100, colTasks.indexOf(task) * 20)}ms`}}>
+                              {proj&&<div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}><span style={{fontSize:12}}>{proj.icon}</span><span style={{fontSize:11,color:proj.color,fontWeight:600,letterSpacing:'0.02em',textTransform:'uppercase'}}>{proj.name}</span></div>}
                               <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:7}}>
                                 <div style={{width:7,height:7,borderRadius:'50%',background:p.dot,flexShrink:0,marginTop:5}}/>
                                 <span style={{fontSize:13,fontWeight:500,color:'#1a1a1a',lineHeight:1.45,flex:1}}>{task.title}</span>
