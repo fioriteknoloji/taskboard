@@ -10,7 +10,7 @@ import {
   Circle, Clock, CheckCircle2,
   Bell, ClipboardList, Plus, Search, LogOut, Hexagon,
   Sparkles, PenLine, ArrowRight, MessageSquare, Trash2,
-  Moon, Sun, Menu, UserPlus
+  Moon, Sun, Menu, UserPlus, CloudDownload
 } from 'lucide-react'
 import CalendarView   from './CalendarView'
 import TaskModal      from './TaskModal'
@@ -21,6 +21,7 @@ import LabelsManager  from './LabelsManager'
 import ProjectsView   from './ProjectsView'
 import DashboardView  from './DashboardView'
 import WorkloadView   from './WorkloadView'
+import SapImportView  from './SapImportView'
 
 const COLUMNS = [
   { id:'todo',  label:'Yapılacak',  color:'var(--text-tertiary)', icon:<Circle size={16} strokeWidth={2.5} /> },
@@ -177,7 +178,15 @@ export default function Board(){
   async function saveTask(form){
     if(!form.title?.trim())return
     const tags=form.tags?form.tags.split(',').map(s=>s.trim()).filter(Boolean):[]
-    const payload={title:form.title.trim(),status:form.status,priority:form.priority,assignee_id:form.assignee_id||null,tags,start_date:form.start_date||null,due_date:form.due_date||null,recurrence:form.recurrence||null,recurrence_end:form.recurrence_end||null,project_id:form.project_id||null,updated_at:new Date().toISOString()}
+    const payload={
+      title:form.title.trim(),status:form.status,priority:form.priority,
+      assignee_id:form.assignee_id||null,tags,
+      start_date:form.start_date||null,due_date:form.due_date||null,
+      recurrence:form.recurrence||null,recurrence_end:form.recurrence_end||null,
+      project_id:form.project_id||null,updated_at:new Date().toISOString(),
+      description:form.description||null,estimated_hours:form.estimated_hours?parseFloat(form.estimated_hours):null,
+      customer:form.customer||null,ticket_no:form.ticket_no||null
+    }
 
     if(modal==='new'){
       payload.notes=[];payload.user_id=user.id
@@ -277,6 +286,7 @@ export default function Board(){
     {id:'workload', icon:<Scale size={18} strokeWidth={2}/>, label:'İş Yükü'},
     {id:'dashboard',icon:<PieChart size={18} strokeWidth={2}/>, label:'Dashboard'},
     {id:'activity', icon:<Activity size={18} strokeWidth={2}/>,  label:'Aktivite'},
+    {id:'sap-import', icon:<CloudDownload size={18} strokeWidth={2}/>, label:'SAP Aktarım'},
     ...(isAdmin?[{id:'labels',icon:<Tags size={18} strokeWidth={2}/>,label:'Etiketler'}]:[]),
   ]
 
@@ -414,6 +424,7 @@ export default function Board(){
           {/* Content */}
           <div style={{flex:1,overflow:FULL_HEIGHT_VIEWS.includes(view)?'hidden':'auto',padding:view==='board'?18:view==='gantt'||view==='sprint'||view==='projects'?0:view==='calendar'?'18px 18px 8px':0,display:'flex',flexDirection:'column'}}>
 
+            {view==='sap-import'&&<SapImportView profiles={profiles} user={user} projects={projects} />}
             {view==='projects'&&<ProjectsView tasks={tasks} profiles={profiles} projects={projects} isAdmin={isAdmin} onTaskClick={openEdit} subtaskCounts={subtaskCounts}/>}
             {view==='dashboard'&&<DashboardView tasks={tasks} profiles={profiles} projects={projects} activity={activity}/>}
             {view==='workload'&&<WorkloadView tasks={tasks} profiles={profiles} onTaskClick={openEdit}/>}
@@ -537,7 +548,7 @@ export default function Board(){
         </div>
       </div>
 
-      {modal&&<TaskModal modal={modal} form={form} setForm={setForm} setModal={setModal} profiles={profiles} allTasks={tasks} user={user} profile={profile} isAdmin={isAdmin} onSave={saveTask} onDelete={deleteTask} activity={activity}/>}
+      {modal&&<TaskModal modal={modal} form={form} setForm={setForm} setModal={setModal} profiles={profiles} allTasks={tasks} user={user} profile={profile} isAdmin={isAdmin} onSave={saveTask} onDelete={deleteTask} activity={activity} projects={projects}/>}
     </>
   )
 }

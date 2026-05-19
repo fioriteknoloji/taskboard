@@ -481,7 +481,7 @@ function DependencyWarning({ taskId, allTasks }) {
 }
 
 // ─── MAIN MODAL ───────────────────────────────────────────────────────────────
-export default function TaskModal({ modal, form, setForm, setModal, profiles, allTasks, user, profile, isAdmin, onSave, onDelete, activity }) {
+export default function TaskModal({ modal, form, setForm, setModal, profiles, allTasks, user, profile, isAdmin, onSave, onDelete, activity, projects=[] }) {
   const [activeTab, setActiveTab] = useState('detail')
   const [noteInput, setNoteInput] = useState('')
   const [saving, setSaving] = useState(false)
@@ -572,8 +572,19 @@ export default function TaskModal({ modal, form, setForm, setModal, profiles, al
                 <Field label="Bitiş tarihi"><Inp type="date" value={form.due_date||''} onChange={e=>setForm(f=>({...f,due_date:e.target.value}))} /></Field>
                 <Field label="Tekrar"><Sel value={form.recurrence||''} onChange={e=>setForm(f=>({...f,recurrence:e.target.value}))}>{RECURRENCE_OPTIONS.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}</Sel></Field>
               </div>
+              <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12, marginTop:14 }}>
+                <Field label="Proje"><Sel value={form.project_id||''} onChange={e=>setForm(f=>({...f,project_id:e.target.value}))}><option value="">Seç…</option>{projects.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</Sel></Field>
+                <Field label="Müşteri"><Inp value={form.customer||''} onChange={e=>setForm(f=>({...f,customer:e.target.value}))} placeholder="Müşteri adı" /></Field>
+                <Field label="Ticket No"><Inp value={form.ticket_no||''} onChange={e=>setForm(f=>({...f,ticket_no:e.target.value}))} placeholder="Bilet veya destek no" /></Field>
+              </div>
+              <div style={{ display:'grid',gridTemplateColumns:'1fr 2fr',gap:12 }}>
+                <Field label="Tahmini Efor (Saat)"><Inp type="number" step="0.5" min="0" value={form.estimated_hours||''} onChange={e=>setForm(f=>({...f,estimated_hours:e.target.value}))} placeholder="8.0" /></Field>
+                <Field label="Etiketler (virgülle ayır)"><Inp value={form.tags||''} onChange={e=>setForm(f=>({...f,tags:e.target.value}))} placeholder="tasarım, backend, frontend…" /></Field>
+              </div>
               {form.recurrence && <Field label="Tekrar bitiş tarihi"><Inp type="date" value={form.recurrence_end||''} onChange={e=>setForm(f=>({...f,recurrence_end:e.target.value}))} style={{ maxWidth:200 }} /></Field>}
-              <Field label="Etiketler (virgülle ayır)"><Inp value={form.tags||''} onChange={e=>setForm(f=>({...f,tags:e.target.value}))} placeholder="tasarım, backend, frontend…" /></Field>
+              <Field label="Açıklama">
+                <textarea className="modern-input" value={form.description||''} onChange={e=>setForm(f=>({...f,description:e.target.value}))} placeholder="Görevin detayı..." style={{ width:'100%', padding:'10px 12px', minHeight:80, resize:'vertical', fontFamily:'inherit' }} />
+              </Field>
               {!isNew && modal.recurrence && (
                 <div style={{ display:'flex',alignItems:'center',gap:8,padding:'8px 12px',background:'#eef0fc',borderRadius:8,marginBottom:14,fontSize:12,color:'#5e6ad2' }}>
                   <Repeat size={14} strokeWidth={2.5}/><span>Bu görev <b>{RECURRENCE_OPTIONS.find(o=>o.value===modal.recurrence)?.label}</b> tekrar ediyor</span>
